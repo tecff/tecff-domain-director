@@ -10,7 +10,7 @@ from director.server import create_app
 def read_config_file(path):
     with open(path, "r") as f:
         content = f.read()
-        config = yaml.load(content)
+        config = yaml.load(content, Loader=yaml.Loader)
         return config
 
 

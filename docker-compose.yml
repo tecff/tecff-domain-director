@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+ domain-director:
+  build: .
+  ports:
+   - "127.0.0.1:28530:28530"
+  restart: unless-stopped
+  volumes:
+   - ./config.yml:/director/config.yml:ro
+   - ./domains.geojson:/director/domains.geojson:ro
+   - ./:/director/
+   - ./data:/director/director-data:rw
+   - /etc/localtime:/etc/localtime:ro

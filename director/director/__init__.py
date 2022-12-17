@@ -23,20 +23,26 @@ class Director:
         self.config = config
         self.geo_provider = geo_provider
         self.polygons = polygons
+        self.domains = {}
 
         if type(self.polygons) is str:
-            self.polygons = Director.load_polygons(polygons)
+            self.polygons,self.domains = Director.load_polygons(polygons)
 
     @staticmethod
     def load_polygons(geojson_input):
         polygons = {}
+        domains = {} 
 
         for feature in json.loads(geojson_input)['features']:
             polygon = shape(feature['geometry'])
             domain_name = feature["properties"]["name"]
-            polygons[domain_name] = polygon
+            print("Domainname ist:" +feature['properties']['name'])
+            print("Prettyname ist:" + feature['properties']['pretty_name'])
+            pretty_name = feature['properties']['pretty_name']
+            polygons[pretty_name] = polygon
+            domains[pretty_name] = domain_name
 
-        return polygons
+        return polygons,domains
 
     @staticmethod
     def mesh_is_vpn_only(mesh_id):
@@ -47,10 +53,12 @@ class Director:
         closest_domain_distance = None
         for domain_name, polygon in self.polygons.items():
             if polygon.contains(Point((location.lon, location.lat))):
+                print("FoundIntersection: " + str(location.lon) + "," + str(location.lat))
                 return domain_name
 
             distance = get_point_polygon_distance(Point((location.lon, location.lat)), polygon)
             if closest_domain_distance is None or distance < closest_domain_distance:
+                print("FoundClosestDomain: " + str(domain_name) + "," + str(distance) )
                 closest_domain = domain_name
                 closest_domain_distance = distance
 
@@ -94,7 +102,11 @@ class Director:
             if domain and criteria:
                 Mesh.set_domain(mesh_id, domain, criteria)
 
+        #domain = domain or self.config["default_domain"]
+        if domain in self.domains:
+            domain = self.domains[domain]
         domain = domain or self.config["default_domain"]
+        print("Node "+node_id + " to "+domain)
 
         switch_time = Mesh.get_switch_time(mesh_id)
         if switch_time is None:
